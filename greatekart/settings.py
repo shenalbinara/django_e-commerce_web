@@ -80,6 +80,9 @@ WSGI_APPLICATION = 'greatekart.wsgi.application'
 AUTH_USER_MODEL = 'accounts.Account'
 
 
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.EmailAuthBackend',
+]
 
 
 # Database
@@ -142,3 +145,22 @@ STATIC_ROOT = BASE_DIR / 'static'  # This is where collectstatic will gather the
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR /'media'
 
+
+from django.contrib.messages import constants as messages
+MESSAGE_TAGS = {
+    messages.ERROR: 'danger',
+
+    
+}
+
+
+
+#smtp confiquartion
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'kahadhugodakankanamge@gmail.com'
+EMAIL_HOST_PASSWORD = 'nraw dbvm jzqf ovba'
+EMAIL_USE_TLS = True
+
+
+EMAIL_BACKEND = 'accounts.email_backend.CustomEmailBackend'
