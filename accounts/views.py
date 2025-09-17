@@ -15,6 +15,10 @@ from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 
 
+from carts.views import _cart_id
+from carts.models import Cart, CartItem
+import requests
+
 
 
 
@@ -87,10 +91,67 @@ def login(request):
         user = authenticate(request, username=email, password=password)
 
         if user is not None:
+            try:
+               
+                cart = Cart.objects.get(cart_id=_cart_id(request))  # cart is defined here
+                is_cart_item_exists = CartItem.objects.filter(cart=cart).exists()
+
+                if is_cart_item_exists:
+                    cart_item = CartItem.objects.filter(cart=cart)
+                    
+                    product_variation = []
+                    for item in cart_item:
+                        variation = item.variation.all()
+                        product_variation.append(list(variation))
+                        
+                        
+                    
+                    cart_items = CartItem.objects.filter(user=user)
+
+                    ex_var_list = []
+                    id_list = []
+
+                    for item in cart_items:
+                        existing_variation = item.variations.all()
+                        ex_var_list.append(list(existing_variation))
+                        id_list.append(item.id)
+
+                        
+                  
+                    
+                    #for item in cart_item:
+                        #item.user = user
+                       # item.save()
+                    
+                    for pr in product_variation:
+                        if pr in ex_var_list:
+                            index = ex_var_list.index(pr)
+                            item_id = id(index)
+                            item = CartItem.objects.get(id=item_id)
+                            item.quantity += 1
+                            item.user = user
+                            item.save()
+                            
+
+            except:
+            
+                pass
+
             if user.is_active:
                 auth_login(request, user)
                 messages.success(request, 'You are now logged in.')
-                return redirect('dashboard')  # Change 'home' to your actual homepage URL name
+                url = request.META.get('HTTP_REFERER')
+                try:
+                    query = requests.utils.urlparse(url).query
+                    print('query -> ', query)
+                    print('-----')
+                    params = dict(x.split('=') for x in query.split('&'))
+                    if 'next' in params:
+                        nextPage = params['next']
+                        return redirect(nextPage)
+                
+                except:
+                    return redirect('dashboard')  # Change 'dashboard' if needed
             else:
                 messages.error(request, 'Account is inactive. Please contact support.')
         else:
@@ -100,6 +161,7 @@ def login(request):
         return redirect('login')  # Stay on the login page if failed
 
     return render(request, 'accounts/login.html')
+
 
 
 @login_required(login_url = 'login')
